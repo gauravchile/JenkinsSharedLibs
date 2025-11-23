@@ -1,16 +1,34 @@
-def call(String imageName, String tag = '', String registry = '', String credentialsId = 'dockerhub-creds') {
-    stage("Docker Push: ${imageName}:${tag}") {
-        def fullImage = registry ? "${registry}/${imageName}:${tag}" : "${imageName}:${tag}"
-        echo "📤 Preparing to push Docker image → ${fullImage}"
+/**
+ * docker_push.groovy
+ * Universal reusable Docker push helper.
+ *
+ * Parameters (Map):
+ *   imageName   - Required: Full image name (e.g. docker.io/user/app)
+ *   imageTag    - Optional: Image tag (default: 'latest')
+ *   credentials - Optional: Jenkins credentials ID (default: 'dockerhub-creds')
+ */
 
-        withCredentials([usernamePassword(credentialsId: credentialsId, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-            sh '''
-              echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-            '''
-            sh "docker push ${fullImage}"
-            sh "docker logout"
+def call(Map config = [:]) {
+    def imageName   = config.imageName ?: error("❌ docker_push: 'imageName' is required")
+    def imageTag    = config.imageTag ?: 'latest'
+    def credentials = config.credentials ?: 'dockerhub-creds'
+
+    stage("📤 Push: ${imageName}:${imageTag}") {
+        echo "📦 Pushing Docker image → ${imageName}:${imageTag}"
+
+        withCredentials([usernamePassword(
+            credentialsId: credentials,
+            usernameVariable: 'DOCKER_USERNAME',
+            passwordVariable: 'DOCKER_PASSWORD'
+        )]) {
+            sh """
+                echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
+                docker push ${imageName}:${imageTag}
+                docker push ${imageName}:latest
+                docker logout
+            """
         }
 
-        echo "✅ Successfully pushed ${fullImage}"
+        echo "✅ Successfully pushed ${imageName}:${imageTag} and latest."
     }
 }
