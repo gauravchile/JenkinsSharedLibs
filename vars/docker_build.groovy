@@ -1,10 +1,12 @@
-def call(String imageName, String tag = '', String registry = '') {
-    stage("Docker Build: ${imageName}:${tag}") {
-        def fullImage = registry ? "${registry}/${imageName}:${tag}" : "${imageName}:${tag}"
-        echo "🐳 Building Docker image → ${fullImage}"
+def call(String imageName, String imageTag = 'latest', String context = '.', String dockerfile = 'Dockerfile') {
+    stage("🐳 Build: ${imageName}:${imageTag}") {
+        echo "📦 Building Docker image → ${imageName}:${imageTag}"
+        echo "🧱 Context: ${context}, Dockerfile: ${dockerfile}"
+
         sh """
-            docker build -t ${fullImage} .
+            docker build -t ${imageName}:${imageTag} -t ${imageName}:latest -f ${context}/${dockerfile} ${context}
         """
-        echo "✅ Successfully built ${fullImage}"
+
+        echo "✅ Successfully built ${imageName}:${imageTag} and tagged as latest."
     }
 }
