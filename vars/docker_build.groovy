@@ -1,4 +1,4 @@
-def call(String imageName, String tag = 'latest', String registry = '') {
+def call(String imageName, String tag = '', String registry = '') {
     stage("Docker Build: ${imageName}:${tag}") {
         def fullImage = registry ? "${registry}/${imageName}:${tag}" : "${imageName}:${tag}"
         echo "🐳 Building Docker image → ${fullImage}"
