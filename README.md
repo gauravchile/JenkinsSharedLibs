@@ -1,13 +1,13 @@
-# 🛡️ ShieldOps Jenkins Shared Library
+# 🧩 JenkinsSharedLibs
 
-A **complete DevSecOps shared library** for Jenkins that automates CI/CD, container security, IaC validation, compliance checks, and reporting — all in one modular setup.
+A **universal Jenkins Shared Library** for CI/CD, DevOps, and DevSecOps automation — designed to work across any application or infrastructure stack.
 
 ---
 
 ## 📁 Folder Structure
 
 ```
-shieldops-shared-library/
+JenkinsSharedLibs/
 ├── README.md
 └── vars/
     ├── clean_ws.groovy
@@ -45,13 +45,13 @@ shieldops-shared-library/
 1. Go to **Manage Jenkins → Configure System → Global Pipeline Libraries**.
 2. Add a new library:
 
-   * **Name:** `shieldops`
+   * **Name:** `JenkinsSharedLibs`
    * **Default version:** `main`
-   * **Retrieval method:** Modern SCM → Git → Enter your repo URL.
+   * **Retrieval method:** Modern SCM → Git → Enter your repository URL.
 3. Load the library in your Jenkinsfile:
 
    ```groovy
-   @Library('shieldops') _
+   @Library('JenkinsSharedLibs') _
    ```
 
 ---
@@ -69,7 +69,7 @@ shieldops-shared-library/
 | 🛡️ Security       | `trivy_scan.groovy`, `snyk_scan.groovy`, `secret_scan.groovy`, `iac_scan.groovy`, `compliance_check.groovy` | Conducts DevSecOps security checks          |
 | 🐳 Container       | `docker_build.groovy`, `docker_push.groovy`                                                                 | Builds and pushes Docker images             |
 | ☸️ Deployment      | `helm_deploy.groovy`, `update_k8s_manifests.groovy`                                                         | Deploys to Kubernetes using Helm            |
-| ☁️ Infrastructure  | `terraform_apply.groovy`                                                                                    | Provisions infra via Terraform              |
+| ☁️ Infrastructure  | `terraform_apply.groovy`                                                                                    | Provisions infrastructure via Terraform     |
 | 📊 Reporting       | `generate_reports.groovy`                                                                                   | Publishes test and scan reports             |
 | 📬 Notifications   | `notify_slack.groovy`, `notify_email.groovy`                                                                | Sends build status notifications            |
 | 🔁 Recovery        | `rollback_deploy.groovy`, `backup_configs.groovy`                                                           | Rollbacks and backups configs               |
@@ -80,21 +80,21 @@ shieldops-shared-library/
 ## 🧱 Example Jenkinsfile
 
 ```groovy
-@Library('shieldops') _
+@Library('JenkinsSharedLibs') _
 
 pipeline {
     agent any
     environment {
-        REGISTRY = 'ghcr.io/gaurav'
-        IMAGE_NAME = 'shieldops-app'
-        NAMESPACE = 'shieldops'
-        SLACK_CHANNEL = '#devsecops'
-        APP_URL = 'http://shieldops-app.local/health'
+        REGISTRY = 'ghcr.io/org'
+        IMAGE_NAME = 'my-app'
+        NAMESPACE = 'production'
+        SLACK_CHANNEL = '#ci-cd'
+        APP_URL = 'http://my-app.local/health'
     }
 
     stages {
         stage('Clean') { steps { clean_ws() } }
-        stage('Clone') { steps { clone('https://github.com/gaurav/shieldops.git') } }
+        stage('Clone') { steps { clone('https://github.com/org/my-app.git') } }
         stage('Setup Env') { steps { setup_env('.env') } }
         stage('Versioning') { steps { script { env.VERSION = versioning() } } }
 
@@ -126,7 +126,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 update_k8s_manifests('k8s', VERSION)
-                helm_deploy(IMAGE_NAME, './helm/shieldops', NAMESPACE)
+                helm_deploy(IMAGE_NAME, './helm/my-app', NAMESPACE)
             }
         }
 
@@ -140,12 +140,12 @@ pipeline {
 
     post {
         success {
-            notify_slack(SLACK_CHANNEL, "✅ ShieldOps pipeline succeeded — version ${VERSION}")
-            notify_email('team@shieldops.io', 'Build Success', "Version ${VERSION} deployed successfully.")
+            notify_slack(SLACK_CHANNEL, "✅ Pipeline succeeded — version ${VERSION}")
+            notify_email('devops-team@example.com', 'Build Success', "Version ${VERSION} deployed successfully.")
             backup_configs()
         }
         failure {
-            notify_slack(SLACK_CHANNEL, '❌ ShieldOps pipeline failed!')
+            notify_slack(SLACK_CHANNEL, '❌ Pipeline failed!')
             rollback_deploy(NAMESPACE, IMAGE_NAME)
         }
     }
@@ -156,15 +156,15 @@ pipeline {
 
 ## 🔐 Integrated Security Tools
 
-| Tool          | Function                 |
-| ------------- | ------------------------ |
-| **Trivy**     | Image vulnerability scan |
-| **Snyk**      | Dependency scan          |
-| **Gitleaks**  | Secret detection         |
-| **tfsec**     | Terraform IaC scan       |
-| **Conftest**  | Policy compliance        |
-| **OWASP DC**  | Dependency analysis      |
-| **SonarQube** | Static code analysis     |
+| Tool                       | Function                      |
+| -------------------------- | ----------------------------- |
+| **Trivy**                  | Image vulnerability scan      |
+| **Snyk**                   | Dependency vulnerability scan |
+| **Gitleaks**               | Secret detection              |
+| **tfsec**                  | Terraform IaC scan            |
+| **Conftest**               | Policy compliance             |
+| **OWASP Dependency-Check** | Dependency analysis           |
+| **SonarQube**              | Static code analysis          |
 
 ---
 
@@ -180,4 +180,4 @@ pipeline {
 
 **Gaurav Chile**
 Linux System Administrator | DevOps & Security Engineer
-🛡️ *ShieldOps – Secure CI/CD, Simplified.*
+🧩 *JenkinsSharedLibs — CI/CD, DevOps, and Security Automation Simplified.*
