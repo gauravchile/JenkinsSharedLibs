@@ -1,6 +1,9 @@
-def call(String manifestDir = 'kubernetes/base', String namespace = 'default') {
-    stage("Kubernetes Deploy") {
-        echo "☸️ Deploying manifests from ${manifestDir} to namespace: ${namespace}"
+def call(String manifestDir = '', String namespace = '') {
+    if (!manifestDir?.trim()) error("❌ k8s_deploy: 'manifestDir' is required.")
+    if (!namespace?.trim()) error("❌ k8s_deploy: 'namespace' is required.")
+
+    stage("☸️ Kubernetes Deploy") {
+        echo "🚀 Starting deployment from '${manifestDir}' to namespace '${namespace}'"
 
         try {
             sh """
@@ -14,22 +17,22 @@ def call(String manifestDir = 'kubernetes/base', String namespace = 'default') {
                 fi
 
                 echo "⏳ Waiting for namespace initialization..."
-                sleep 5
+                kubectl get ns ${namespace} >/dev/null 2>&1 || sleep 5
 
-                echo "📦 Applying all Kubernetes manifests in ${manifestDir}..."
+                echo "📄 Applying all manifests from ${manifestDir}..."
                 kubectl apply -f ${manifestDir}/ --validate=false
 
-                echo "🕒 Checking deployment rollout statuses..."
+                echo "🕒 Checking rollout status for all deployments..."
                 DEPLOYMENTS=$(kubectl get deploy -n ${namespace} -o jsonpath='{.items[*].metadata.name}')
                 for dep in $DEPLOYMENTS; do
-                    echo "➡️ Waiting for deployment: $dep"
+                    echo \"➡️ Waiting for rollout of deployment: $dep\"
                     kubectl rollout status deploy/$dep -n ${namespace} --timeout=180s || true
                 done
 
-                echo "✅ Kubernetes deployment completed successfully for namespace: ${namespace}"
+                echo \"✅ Deployment completed successfully for namespace: ${namespace}\"
             """
         } catch (Exception e) {
-            echo "❌ Kubernetes deployment failed: ${e.message}"
+            echo \"❌ Kubernetes deployment failed: ${e.message}\"
             currentBuild.result = 'FAILURE'
             throw e
         }
