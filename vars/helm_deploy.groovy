@@ -1,18 +1,3 @@
-/**
- * helm_deploy.groovy
- * Universal Helm-based Kubernetes deployment helper.
- *
- * Parameters (Map):
- *   chartDir     - Required: Path to Helm chart (e.g. ./helm/ShieldOps)
- *   releaseName  - Optional: Helm release name (default: 'app-release')
- *   namespace    - Required: Kubernetes namespace
- *   imageRepo    - Required: Docker image repository (e.g. docker.io/user/app)
- *   imageTag     - Required: Docker image tag (e.g. backend-123)
- *   uiImageRepo  - Optional: Separate repo for UI image (if applicable)
- *   uiImageTag   - Optional: Separate tag for UI image (if applicable)
- *   timeout      - Optional: Helm wait timeout (default: 180s)
- */
-
 def call(Map config = [:]) {
     def chartDir    = config.chartDir ?: error("❌ helm_deploy: 'chartDir' is required.")
     def releaseName = config.releaseName ?: 'app-release'
