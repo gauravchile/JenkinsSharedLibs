@@ -1,8 +1,10 @@
-def call(String imageName, String registry) {
-    stage('Docker Push') {
+def call(String imageName, String tag = 'latest', String registry = '') {
+    stage("Docker Push: ${imageName}:${tag}") {
+        def fullImage = registry ? "${registry}/${imageName}:${tag}" : "${imageName}:${tag}"
+        echo "📤 Pushing Docker image → ${fullImage}"
         sh """
-            docker tag ${imageName}:latest ${registry}/${imageName}:latest
-            docker push ${registry}/${imageName}:latest
+            docker push ${fullImage}
         """
+        echo "✅ Successfully pushed ${fullImage}"
     }
 }
