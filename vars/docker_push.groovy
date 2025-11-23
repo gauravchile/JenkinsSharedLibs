@@ -1,4 +1,4 @@
-def call(String imageName, String tag = 'latest', String registry = '', String credentialsId = 'dockerhub-creds') {
+def call(String imageName, String tag = '', String registry = '', String credentialsId = 'dockerhub-creds') {
     stage("Docker Push: ${imageName}:${tag}") {
         def fullImage = registry ? "${registry}/${imageName}:${tag}" : "${imageName}:${tag}"
         echo "📤 Preparing to push Docker image → ${fullImage}"
