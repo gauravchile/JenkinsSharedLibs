@@ -1,5 +1,11 @@
-def call(String manifestDir = 'k8s', String imageTag = 'latest') {
-    stage('Update K8s Manifests') {
-        sh "find ${manifestDir} -type f -name '*.yaml' -exec sed -i 's|:latest|:${imageTag}|g' {} +"
+stage('☸️ Update Kubernetes Manifests') {
+  steps {
+    script {
+      update_k8s_manifests(
+        manifestDir: 'kubernetes/base',
+        imageTag: "backend-${BUILD_NUMBER}",
+        imageName: 'shieldops'
+      )
     }
+  }
 }
