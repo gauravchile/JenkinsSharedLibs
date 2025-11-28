@@ -1,54 +1,56 @@
 /**
- * docker_push.groovy
+ * docker_build.groovy
  * -------------------
- * Universal reusable Docker image push helper for Jenkins pipelines.
+ * Universal reusable Docker build helper for Jenkins pipelines.
  *
  * Usage:
- *   docker_push("<imageName>", "<imageTag>")
+ *   docker_build("<imageName>", "<contextPath>", "<imageTag>")
  *   OR
- *   docker_push("<imageName>", "<imageTag>", "<credentialsId>")
+ *   docker_build(imageName: "<image>", context: "<dir>", imageTag: "<tag>", buildArgs: "--build-arg KEY=value")
  *
- * Defaults:
- *   credentialsId = 'dockerhub-creds'
- *   pushLatest = true
+ * Parameters:
+ *   imageName   - Required: Full image name (e.g. docker.io/user/app)
+ *   context     - Required: Build context or Dockerfile directory
+ *   imageTag    - Optional: Tag (default: 'latest')
+ *   buildArgs   - Optional: Additional build args (e.g., "--build-arg ENV=prod")
+ *   dockerfile  - Optional: Custom Dockerfile path (default: Dockerfile in context)
+ *   noCache     - Optional: Boolean (default: false)
  */
 
-def call(String imageName, String imageTag = 'latest', String credentials = 'dockerhub-creds') {
+def call(String imageName, String context = '.', String imageTag = 'latest') {
     call([
-        imageName  : imageName,
-        imageTag   : imageTag,
-        credentials: credentials,
-        pushLatest : true
+        imageName : imageName,
+        context   : context,
+        imageTag  : imageTag,
+        buildArgs : '',
+        dockerfile: 'Dockerfile',
+        noCache   : false
     ])
 }
 
 /**
  * Internal overload for map-style calls.
- * Supports both positional and map-based invocation.
  */
 def call(Map config = [:]) {
-    def imageName   = config.imageName ?: error("❌ docker_push: 'imageName' is required")
-    def imageTag    = config.imageTag ?: 'latest'
-    def credentials = config.credentials ?: 'dockerhub-creds'
-    def pushLatest  = config.get('pushLatest', true)
+    def imageName  = config.imageName ?: error("❌ docker_build: 'imageName' is required")
+    def context    = config.context ?: '.'
+    def imageTag   = config.imageTag ?: 'latest'
+    def buildArgs  = config.buildArgs ?: ''
+    def dockerfile = config.dockerfile ?: 'Dockerfile'
+    def noCacheOpt = config.get('noCache', false) ? '--no-cache' : ''
 
-    stage("Push Docker Image: ${imageName}:${imageTag}") {
-        echo "🚀 Preparing to push → ${imageName}:${imageTag}"
+    stage("Build Docker Image: ${imageName}:${imageTag}") {
+        echo "🏗️ Building Docker image → ${imageName}:${imageTag}"
+        echo "📂 Context: ${context}"
+        echo "🧱 Dockerfile: ${dockerfile}"
+        if (buildArgs) echo "⚙️ Build args: ${buildArgs}"
 
-        withCredentials([usernamePassword(
-            credentialsId: credentials,
-            usernameVariable: 'DOCKER_USERNAME',
-            passwordVariable: 'DOCKER_PASSWORD'
-        )]) {
-            sh """
-                echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
-                echo "Pushing ${imageName}:${imageTag} ..."
-                docker push ${imageName}:${imageTag}
-                ${pushLatest ? "docker tag ${imageName}:${imageTag} ${imageName}:latest && docker push ${imageName}:latest" : ""}
-                docker logout
-            """
-        }
+        sh """
+            docker build ${noCacheOpt} \
+              -t ${imageName}:${imageTag} \
+              -f ${dockerfile} ${buildArgs} ${context}
+        """
 
-        echo "✅ Successfully pushed ${imageName}:${imageTag}${pushLatest ? ' and latest' : ''}."
+        echo "✅ Successfully built ${imageName}:${imageTag}"
     }
 }
