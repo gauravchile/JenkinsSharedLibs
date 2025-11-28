@@ -4,26 +4,25 @@
  * Universal reusable Docker build helper for Jenkins pipelines.
  *
  * Usage:
- *   docker_build("<imageName>", "<contextPath>", "<imageTag>")
+ *   docker_build("<imageName>", "<imageTag>")
  *   OR
- *   docker_build(imageName: "<image>", context: "<dir>", imageTag: "<tag>", buildArgs: "--build-arg KEY=value")
+ *   docker_build("<imageName>", "<imageTag>", "<buildArgs>")
+ *   OR
+ *   docker_build(imageName: "<image>", imageTag: "<tag>", context: "<dir>", buildArgs: "--build-arg KEY=value")
  *
- * Parameters:
- *   imageName   - Required: Full image name (e.g. docker.io/user/app)
- *   context     - Required: Build context or Dockerfile directory
- *   imageTag    - Optional: Tag (default: 'latest')
- *   buildArgs   - Optional: Additional build args (e.g., "--build-arg ENV=prod")
- *   dockerfile  - Optional: Custom Dockerfile path (default: Dockerfile in context)
- *   noCache     - Optional: Boolean (default: false)
+ * Defaults:
+ *   context = "."  (current directory)
+ *   dockerfile = "Dockerfile"
+ *   noCache = false
  */
 
-def call(String imageName, String context = '.', String imageTag = 'latest') {
+def call(String imageName, String imageTag = 'latest', String buildArgs = '') {
     call([
         imageName : imageName,
-        context   : context,
         imageTag  : imageTag,
-        buildArgs : '',
+        context   : '.',
         dockerfile: 'Dockerfile',
+        buildArgs : buildArgs,
         noCache   : false
     ])
 }
@@ -33,10 +32,10 @@ def call(String imageName, String context = '.', String imageTag = 'latest') {
  */
 def call(Map config = [:]) {
     def imageName  = config.imageName ?: error("❌ docker_build: 'imageName' is required")
-    def context    = config.context ?: '.'
     def imageTag   = config.imageTag ?: 'latest'
-    def buildArgs  = config.buildArgs ?: ''
+    def context    = config.context ?: '.'
     def dockerfile = config.dockerfile ?: 'Dockerfile'
+    def buildArgs  = config.buildArgs ?: ''
     def noCacheOpt = config.get('noCache', false) ? '--no-cache' : ''
 
     stage("Build Docker Image: ${imageName}:${imageTag}") {
