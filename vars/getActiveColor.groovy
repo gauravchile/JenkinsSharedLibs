@@ -1,50 +1,44 @@
 def call(Map config = [:]) {
-    // Services to check
-    def services = config.get('services', ['frontend', 'backend'])
-    def namespace = config.get('namespace', 'default')
+    def services     = config.get('services', ['frontend', 'backend'])
+    def namespace    = config.get('namespace', 'default')
     def defaultColor = config.get('defaultColor', 'blue')
 
-    def detectedColors = [:]
+    def detected = [:]
 
-    echo "🎨 Detecting active color(s) in namespace '${namespace}' for services: ${services.join(', ')}..."
+    echo "Detecting active deployment colors in namespace '${namespace}' for services: ${services.join(', ')}"
 
-    for (svc in services) {
+    services.each { svc ->
+        def color = ""
         try {
-            def color = sh(
-                script: "kubectl get svc ${svc} -n ${namespace} -o jsonpath='{.spec.selector.color}' 2>/dev/null || echo ''",
+            color = sh(
+                script: "kubectl get svc ${svc} -n ${namespace} -o jsonpath='{.spec.selector.color}' 2>/dev/null || true",
                 returnStdout: true
             ).trim()
 
-            if (color) {
-                detectedColors[svc] = color
-                echo "✅ ${svc} active color: ${color}"
+            if (!color) {
+                color = defaultColor
+                echo "No color found for ${svc}, defaulting to '${defaultColor}'"
             } else {
-                detectedColors[svc] = defaultColor
-                echo "⚠️  No color found for ${svc}. Defaulting to '${defaultColor}'."
+                echo "${svc} active color: ${color}"
             }
-        } catch (Exception e) {
-            detectedColors[svc] = defaultColor
-            echo "⚠️  Error checking ${svc}: ${e.getMessage()}. Defaulting to '${defaultColor}'."
+        } catch (err) {
+            color = defaultColor
+            echo "Error checking ${svc}: ${err.getMessage()} — defaulting to '${defaultColor}'"
         }
+        detected[svc] = color
     }
 
-    // Pick the first service’s color as reference (frontend usually)
-    def mainService = services[0]
-    def activeColor = detectedColors[mainService] ?: defaultColor
-    def nextColor = (activeColor == 'blue') ? 'green' : 'blue'
+    // Reference first service (usually frontend)
+    def active = detected[services[0]] ?: defaultColor
+    def next   = (active == 'blue') ? 'green' : 'blue'
 
     echo """
-    ==============================
-    Active Color Summary:
-    ${detectedColors.collect { k, v -> " - ${k}: ${v}" }.join('\n')}
-    Selected Active Color: ${activeColor}
-    Selected Next Color:   ${nextColor}
-    ==============================
+    ---- Active Color Summary ----
+    ${detected.collect { k, v -> " - ${k}: ${v}" }.join('\n')}
+    Active: ${active}
+    Next:   ${next}
+    --------------------------------
     """
 
-    return [
-        activeColor: activeColor,
-        nextColor: nextColor,
-        all: detectedColors
-    ]
+    return [activeColor: active, nextColor: next, all: detected]
 }
