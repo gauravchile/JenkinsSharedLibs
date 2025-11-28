@@ -1,21 +1,3 @@
-/**
- * docker_build.groovy
- * -------------------
- * Universal reusable Docker build helper for Jenkins pipelines.
- *
- * Usage:
- *   docker_build("<imageName>", "<imageTag>")
- *   OR
- *   docker_build("<imageName>", "<imageTag>", "<buildArgs>")
- *   OR
- *   docker_build(imageName: "<image>", imageTag: "<tag>", context: "<dir>", buildArgs: "--build-arg KEY=value")
- *
- * Defaults:
- *   context = "."  (current directory)
- *   dockerfile = "Dockerfile"
- *   noCache = false
- */
-
 def call(String imageName, String imageTag = 'latest', String buildArgs = '') {
     call([
         imageName : imageName,
