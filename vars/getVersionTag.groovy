@@ -1,36 +1,21 @@
 def call(Map config = [:]) {
-    /*
-      getVersionTag.groovy
-      --------------------
-      Universal version handler for Jenkins pipelines.
-      Supports manual and auto semantic versioning.
-      Optionally creates and pushes a Git tag.
-
-      Parameters:
-        manualTag   - (String) optional manual version tag (e.g. 'v2.1.0')
-        autoGitTag  - (Boolean) whether to auto-tag Git (default: false)
-        gitCred     - (String) Jenkins credential ID for SSH Git push
-    */
-
     def manualTag  = config.get('manualTag', '')?.trim()
     def autoGitTag = config.get('autoGitTag', false)
     def gitCred    = config.get('gitCred', '')
 
-    // 1️⃣ Manual version if provided
     if (manualTag) {
+        env.VERSION_MODE = 'manual'
+        env.PREVIOUS_TAG = sh(script: "git describe --tags --abbrev=0 || echo 'v1.0.0'", returnStdout: true).trim()
+        env.BUMP_TYPE    = 'manual'
         echo "Mode: Manual | Version Tag: ${manualTag}"
         return [tag: manualTag, mode: 'manual']
     }
 
-    // 2️⃣ Auto Semantic Version
     def newTag = getNextSemanticVersion(autoTag: true)
     echo "Mode: Auto | Version Tag: ${newTag}"
 
-    // 3️⃣ Optional Git tagging
     if (autoGitTag) {
-        if (!gitCred) {
-            error "❌ gitCred must be provided when autoGitTag = true"
-        }
+        if (!gitCred) error "❌ gitCred must be provided when autoGitTag = true"
         echo "Creating Git tag ${newTag}..."
         sshagent (credentials: [gitCred]) {
             sh """
@@ -43,5 +28,6 @@ def call(Map config = [:]) {
         echo "✅ Git tag ${newTag} pushed successfully."
     }
 
+    env.VERSION_MODE = 'auto'
     return [tag: newTag, mode: 'auto']
 }
