@@ -1,18 +1,3 @@
-/**
- * docker_push.groovy
- * -------------------
- * Universal reusable Docker image push helper for Jenkins pipelines.
- *
- * Usage:
- *   docker_push("<imageName>", "<imageTag>")
- *   OR
- *   docker_push("<imageName>", "<imageTag>", "<credentialsId>")
- *
- * Defaults:
- *   credentialsId = 'dockerhub-creds'
- *   pushLatest = true
- */
-
 def call(String imageName, String imageTag = 'latest', String credentials = 'dockerhub-creds') {
     call([
         imageName  : imageName,
