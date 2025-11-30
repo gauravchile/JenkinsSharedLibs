@@ -1,3 +1,8 @@
+/**
+ * Pushes a Docker image to the registry.
+ * Usage:
+ *   docker_push('docker.io/user/app', 'v1.0.0')
+ */
 def call(String imageName, String imageTag = 'latest', String credentials = 'dockerhub-creds') {
     call([
         imageName  : imageName,
@@ -8,8 +13,7 @@ def call(String imageName, String imageTag = 'latest', String credentials = 'doc
 }
 
 /**
- * Internal overload for map-style calls.
- * Supports both positional and map-based invocation.
+ * Internal map-style overload.
  */
 def call(Map config = [:]) {
     def imageName   = config.imageName ?: error("❌ docker_push: 'imageName' is required")
@@ -27,7 +31,6 @@ def call(Map config = [:]) {
         )]) {
             sh """
                 echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
-                echo "Pushing ${imageName}:${imageTag} ..."
                 docker push ${imageName}:${imageTag}
                 ${pushLatest ? "docker tag ${imageName}:${imageTag} ${imageName}:latest && docker push ${imageName}:latest" : ""}
                 docker logout
