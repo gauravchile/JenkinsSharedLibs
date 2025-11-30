@@ -13,10 +13,11 @@ def call(Map config = [:]) {
             passwordVariable: 'DOCKER_PASSWORD'
         )]) {
             sh """
+                set -e
+                mkdir -p ~/.docker
                 echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
                 docker push "${imageName}:${imageTag}"
                 ${pushLatest ? "docker tag ${imageName}:${imageTag} ${imageName}:latest && docker push ${imageName}:latest" : ""}
-                docker logout
             """
         }
 
